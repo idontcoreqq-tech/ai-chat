@@ -1,0 +1,59 @@
+import cors from 'cors';
+import express from 'express';
+import {
+  generateAgentReply,
+  getConfiguredModelName,
+  isGeminiConfigured,
+} from './gemini.js';
+
+export function createApp() {
+  const app = express();
+
+  app.use(cors({ origin: true }));
+  app.use(express.json({ limit: '64kb' }));
+
+  app.get('/api/health', (_req, res) => {
+    res.json({
+      ok: true,
+      gemini: isGeminiConfigured(),
+      model: getConfiguredModelName(),
+    });
+  });
+
+  app.post('/api/chat', async (req, res) => {
+    try {
+      if (!isGeminiConfigured()) {
+        res.status(503).json({
+          error: 'Сервер не настроен: укажите GEMINI_API_KEY в переменных окружения.',
+        });
+        return;
+      }
+
+      const { message, history } = req.body ?? {};
+      const text = typeof message === 'string' ? message.trim() : '';
+
+      if (!text) {
+        res.status(400).json({ error: 'Поле message обязательно.' });
+        return;
+      }
+
+      if (text.length > 4000) {
+        res.status(400).json({ error: 'Сообщение слишком длинное (макс. 4000 символов).' });
+        return;
+      }
+
+      const safeHistory = Array.isArray(history) ? history : [];
+      const reply = await generateAgentReply(text, safeHistory);
+      res.json({ reply });
+    } catch (err) {
+      console.error('[api/chat]', err?.cause || err);
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Не удалось получить ответ от ассистента. Попробуйте ещё раз.';
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  return app;
+}
