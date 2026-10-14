@@ -153,6 +153,17 @@ export function useChat() {
         saveMessages(next);
         return next;
       });
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'Неизвестная ошибка';
+      const fallback = createMessage({
+        role: 'agent',
+        text: `Не удалось отправить сообщение: ${detail}`,
+      });
+      setMessages((prev) => {
+        const next = [...prev, fallback];
+        saveMessages(next);
+        return next;
+      });
     } finally {
       setIsTyping(false);
     }

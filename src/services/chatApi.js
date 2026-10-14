@@ -1,38 +1,60 @@
-import {
-  MOCK_FALLBACK_REPLIES,
-  MOCK_KEYWORD_REPLIES,
-  createMessage,
-} from '../data/mocks.js';
+import { createMessage } from '../data/mocks.js';
+import { pickMockReply } from './mockReply.js';
 
-export const USE_MOCK = true;
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 function randomDelay() {
   return 400 + Math.floor(Math.random() * 500);
 }
 
-function pickMockReply(userText) {
-  const lower = userText.toLowerCase().trim();
-  for (const rule of MOCK_KEYWORD_REPLIES) {
-    if (rule.keywords.some((kw) => lower.includes(kw))) {
-      return rule.text;
-    }
+function buildHistoryPayload(history) {
+  return history
+    .filter((m) => m && (m.role === 'user' || m.role === 'agent') && m.text)
+    .map((m) => ({ role: m.role, text: m.text }));
+}
+
+async function sendMessageViaApi(text, history) {
+  const url = `${API_BASE}/api/chat`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: text,
+      history: buildHistoryPayload(history),
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const msg =
+      typeof data.error === 'string'
+        ? data.error
+        : 'Сервис временно недоступен. Проверьте, что запущен backend (npm run dev).';
+    throw new Error(msg);
   }
-  const idx = Math.floor(Math.random() * MOCK_FALLBACK_REPLIES.length);
-  return MOCK_FALLBACK_REPLIES[idx];
+
+  if (!data.reply || typeof data.reply !== 'string') {
+    throw new Error('Некорректный ответ сервера.');
+  }
+
+  return data.reply;
 }
 
 /**
  * @param {string} text
- * @param {Array<{ role: string, text: string }>} _history
+ * @param {Array<{ role: string, text: string }>} history
  * @returns {Promise<{ id: string, role: string, text: string, createdAt: string }>}
  */
-export async function sendMessage(text, _history = []) {
-  if (!USE_MOCK) {
-    throw new Error('Реальный API ещё не подключён. Установите USE_MOCK или реализуйте fetch.');
+export async function sendMessage(text, history = []) {
+  if (USE_MOCK) {
+    await new Promise((resolve) => setTimeout(resolve, randomDelay()));
+    const replyText = pickMockReply(text);
+    return createMessage({ role: 'agent', text: replyText });
   }
 
-  await new Promise((resolve) => setTimeout(resolve, randomDelay()));
-
-  const replyText = pickMockReply(text);
+  const replyText = await sendMessageViaApi(text, history);
   return createMessage({ role: 'agent', text: replyText });
 }
