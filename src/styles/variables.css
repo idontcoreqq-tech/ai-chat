@@ -1,0 +1,46 @@
+:root,
+[data-theme='light'] {
+  --accent: #2dbd6e;
+  --accent-hover: #26a85f;
+  --accent-gradient: linear-gradient(135deg, #2dbd6e 0%, #1fa85a 100%);
+
+  --chat-bg: #ffffff;
+  --chat-surface: #f4f6f8;
+  --chat-border: #e2e8f0;
+  --chat-text: #1e293b;
+  --chat-text-muted: #64748b;
+
+  --bubble-agent-bg: #f1f5f9;
+  --bubble-agent-text: #1e293b;
+  --bubble-user-bg: #2dbd6e;
+  --bubble-user-text: #ffffff;
+
+  --launcher-shadow: 0 4px 24px rgba(45, 189, 110, 0.35);
+  --panel-shadow: 0 12px 48px rgba(15, 23, 42, 0.18);
+
+  --demo-bg: #f8fafc;
+  --demo-card: #ffffff;
+}
+
+[data-theme='dark'] {
+  --accent: #3dd68c;
+  --accent-hover: #2dbd6e;
+  --accent-gradient: linear-gradient(135deg, #2a9d5c 0%, #1e7a47 100%);
+
+  --chat-bg: #1e293b;
+  --chat-surface: #0f172a;
+  --chat-border: #334155;
+  --chat-text: #f1f5f9;
+  --chat-text-muted: #94a3b8;
+
+  --bubble-agent-bg: #334155;
+  --bubble-agent-text: #f1f5f9;
+  --bubble-user-bg: #2dbd6e;
+  --bubble-user-text: #ffffff;
+
+  --launcher-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  --panel-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+
+  --demo-bg: #0f172a;
+  --demo-card: #1e293b;
+}
